@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  apache:
+    image: httpd:2.4.51
+    ports:
+      - "80:80"
+    depends_on:
+      - php-fpm
+    volumes:
+      - ./apache2/conf/extra/proxy-php.conf:/usr/local/apache2/conf/extra/proxy-php.conf
+      - ./apache2/conf/httpd-original.conf:/usr/local/apache2/conf/httpd.conf
+    networks:
+      php_network:
+        aliases:
+          - apache
+    entrypoint: >-
+      bash -c "
+        grep 'Include conf/extra/proxy-php.conf' /usr/local/apache2/conf/httpd.conf || echo 'Include conf/extra/proxy-php.conf' >> /usr/local/apache2/conf/httpd.conf
+        httpd-foreground
+      "
+  php-fpm:
+    image: php:7.4.26-fpm
+    volumes:
+      - ./app:/var/www/html
+    networks:
+      php_network:
+        aliases:
+          - php-fpm
+networks:
+  php_network:
+    driver: bridge
